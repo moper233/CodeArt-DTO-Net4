@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
 [assembly: AssemblyTitle("CodeArt")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("https://github.com/moper233/CodeArt-DTO-Net4")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("moper233")]
 [assembly: AssemblyProduct("CodeArt")]
 [assembly: AssemblyCopyright("Copyright ©  2017 武汉入微科技有限公司")]
 [assembly: AssemblyTrademark("")]
