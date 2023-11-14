@@ -24,7 +24,7 @@ namespace CodeArt.DTO
 
         internal DTEObject _root;
 
-        internal DTObject(DTEObject root,bool isReadOnly)
+        internal DTObject(DTEObject root, bool isReadOnly)
         {
             _root = root;
             this.IsReadOnly = isReadOnly;
@@ -87,12 +87,12 @@ namespace CodeArt.DTO
 
         private DTEntity CreateEntity(string name, object value)
         {
-            if(IsList(value))
+            if (IsList(value))
             {
                 var list = value as IEnumerable;
                 if (list != null) return CreateListEntity(name, list);
             }
-            
+
             var dto = value as DTObject;
             if (dto != null)
             {
@@ -146,7 +146,7 @@ namespace CodeArt.DTO
                 var isPureValue = IsPureValue(value);
                 foreach (var e in eitities)
                 {
-                    if(e.Type == DTEntityType.Value && isPureValue)
+                    if (e.Type == DTEntityType.Value && isPureValue)
                     {
                         var ev = e as DTEValue;
                         ev.Value = value;
@@ -183,7 +183,7 @@ namespace CodeArt.DTO
                 case DTEntityType.Object:
                     {
                         var eo = entity as DTEObject;
-                        if (eo != null) return new DTObject(eo,this.IsReadOnly);
+                        if (eo != null) return new DTObject(eo, this.IsReadOnly);
                     }
                     break;
                 case DTEntityType.List:
@@ -633,7 +633,7 @@ namespace CodeArt.DTO
             return result;
         }
 
-        public DTObject Page(string findExp, int pageIndex,int pageSize)
+        public DTObject Page(string findExp, int pageIndex, int pageSize)
         {
             var list = GetList(findExp, false) ?? new DTObjects();
             int dataCount = list.Count();
@@ -848,7 +848,7 @@ namespace CodeArt.DTO
         public DTObject GetOrCreateObject(string findExp)
         {
             var obj = GetObject(findExp, false);
-            if(obj == null)
+            if (obj == null)
             {
                 obj = DTObject.Create();
                 this.SetObject(findExp, obj);
@@ -912,7 +912,7 @@ namespace CodeArt.DTO
         {
             var entities = this.FindEntities(findExp, false);
 
-            if(entities.Length == 1 && entities.First() is DTEObject)
+            if (entities.Length == 1 && entities.First() is DTEObject)
             {
                 var es = ((DTEObject)entities.First()).GetEntities();
                 foreach (var entity in es)
@@ -973,7 +973,7 @@ namespace CodeArt.DTO
 
         private object CreateEntityValue(DTEntity entity)
         {
-            switch(entity.Type)
+            switch (entity.Type)
             {
                 case DTEntityType.Value:
                     {
@@ -1072,7 +1072,7 @@ namespace CodeArt.DTO
                 action(child);
             });
             if (self) action(this);
-        }       
+        }
 
 
         #endregion
@@ -1099,7 +1099,7 @@ namespace CodeArt.DTO
             if (ve != null)
             {
                 var strValue = ve.Value as string;
-                if (strValue != null && (strValue == "null" || strValue=="" || strValue == "undefined")) return false;
+                if (strValue != null && (strValue == "null" || strValue == "" || strValue == "undefined")) return false;
                 return ve.Value != null;
             }
             return true;
@@ -1246,7 +1246,7 @@ namespace CodeArt.DTO
         {
             return GetCode(sequential, true);
         }
-   
+
         public string GetCode(bool sequential, bool outputKey)
         {
             return _root.GetCode(sequential, outputKey);
@@ -1314,7 +1314,7 @@ namespace CodeArt.DTO
             }
 
             var dto = target as DTObject;
-            if(dto != null)
+            if (dto != null)
             {
                 DTObject result = DTObject.Create();
                 result.Load(schemaCode, dto);
@@ -1336,8 +1336,22 @@ namespace CodeArt.DTO
         public static DTObject Create(string code)
         {
             if (string.IsNullOrEmpty(code)) return DTObject.Create();
+            code = TryPatch(code);
             return CreateComplete(code, false);
         }
+
+        /// <summary>
+        /// 尝试补丁，如果是数组，那么补丁成对象 moper
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        public static string TryPatch(string code)
+        {
+            var isArray = code.StartsWith("[");
+            if (isArray) code = $"{{\"rows\":{code}}}";
+            return code;
+        }
+
 
         /// <summary>
         /// 创建不会被共生器回收的dto对象
@@ -1502,9 +1516,9 @@ namespace CodeArt.DTO
         public void Load(string schemaCode, object target)
         {
             var dy = target as IDTOSerializable;
-            if(dy != null)
+            if (dy != null)
             {
-                Load(schemaCode,dy.GetData());
+                Load(schemaCode, dy.GetData());
                 return;
             }
 
@@ -1522,7 +1536,7 @@ namespace CodeArt.DTO
         {
             var schema = DTObject.Create(schemaCode);
             var entities = schema.GetEntities();
-            foreach(var entity in entities)
+            foreach (var entity in entities)
             {
                 var name = entity.Name;
                 if (target.Exist(name))
@@ -1630,6 +1644,17 @@ namespace CodeArt.DTO
         public static DTObject Serialize(object obj)
         {
             return DTObjectSerializer.Instance.Serialize(obj);
+        }
+
+        /// <summary>
+        /// 利用SerializeObject转换DTO moper
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public static DTObject SerializePro(object obj)
+        {
+            var json = JsonConvert.SerializeObject(obj);
+            return Create(json);
         }
 
         #endregion
