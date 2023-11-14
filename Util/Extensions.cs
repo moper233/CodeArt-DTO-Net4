@@ -33,7 +33,7 @@ namespace CodeArt.Util
                 var info = temp.Item;
                 while (ex != null)
                 {
-                    if(!(ex is TargetInvocationException))  //忽略“调用的目标发生异常”的提示
+                    if (!(ex is TargetInvocationException))  //忽略“调用的目标发生异常”的提示
                     {
                         info.AppendLine(ex.Message);
                     }
@@ -244,7 +244,7 @@ namespace CodeArt.Util
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static (int Year, int Month, int Week) GetWeekOfMonthFixed(this DateTime value)
+        public static Tuple<int, int, int> GetWeekOfMonthFixed(this DateTime value)
         {
             const int splitter = 3;  //分割器，设置为3，是指：本月第一天在星期1,2,3的，那么本月第一天是本月第一周，否则，本月第一天在星期4,5,6,7的，本月第一天是上个月的最后一周
 
@@ -261,7 +261,7 @@ namespace CodeArt.Util
                 var firstWeekRemainingDays = 7 - firstDayOfWeek; //以1号为起始，其余的天数是在第一周的，还有remainingDays
                 var firstWeeklastDay = 1 + firstWeekRemainingDays;
 
-                if (value.Day >= 1 && value.Day <= firstWeeklastDay) return (value.Year, value.Month, 1);
+                if (value.Day >= 1 && value.Day <= firstWeeklastDay) return new Tuple<int, int, int>(value.Year, value.Month, 1);
 
                 if (lastDayOfWeek < splitter)//本月最后一天，在星期1或星期2,那么本月最后一天所在的周，就是下个月的第1周
                 {
@@ -269,14 +269,14 @@ namespace CodeArt.Util
                     if (value.Day >= lastWeekFirstDay && value.Day <= lastDay.Day)
                     {
                         var nextMonth = firstDay.AddMonths(1);
-                        return (nextMonth.Year, nextMonth.Month, 1);
+                        return new Tuple<int, int, int>(nextMonth.Year, nextMonth.Month, 1);
                     }
                 }
 
                 var dis = value.Day - firstWeeklastDay;
                 var week = dis / 7 + 2;
                 if (dis % 7 == 0) week--;
-                return (value.Year, value.Month, week);
+                return new Tuple<int, int, int>(value.Year, value.Month, week);
             }
             else
             {
@@ -296,14 +296,14 @@ namespace CodeArt.Util
                     if (value.Day >= lastWeekFirstDay && value.Day <= lastDay.Day)
                     {
                         var nextMonth = firstDay.AddMonths(1);
-                        return (nextMonth.Year, nextMonth.Month, 1);
+                        return new Tuple<int, int, int>(nextMonth.Year, nextMonth.Month, 1);
                     }
                 }
 
                 var dis = value.Day - firstWeekLastDay;
                 var week = dis / 7 + 1;
                 if (dis % 7 == 0) week--;
-                return (value.Year, value.Month, week);
+                return new Tuple<int, int, int>(value.Year, value.Month, week);
             }
         }
 
@@ -312,7 +312,7 @@ namespace CodeArt.Util
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static (DateTime Start, DateTime End) GetWeekRange(this DateTime value)
+        public static Tuple<DateTime, DateTime> GetWeekRange(this DateTime value)
         {
             int dayOfWeek = Convert.ToInt32(value.DayOfWeek);
             DateTime start, end;
@@ -331,7 +331,7 @@ namespace CodeArt.Util
                 end = new DateTime(lastDay.Year, lastDay.Month, lastDay.Day, 23, 59, 59);
             }
 
-            return (start, end);
+            return new Tuple<DateTime, DateTime>(start, end);
         }
 
         public static int GetDayOfWeekNumber(this DateTime value)
@@ -349,14 +349,15 @@ namespace CodeArt.Util
             throw new ApplicationException("GetDayOfWeekNumber发生未知的异常");
         }
 
-        public static (DateTime Start, DateTime End) GetMonthRange(this DateTime value)
+        public static Tuple<DateTime, DateTime> GetMonthRange(this DateTime value)
         {
             //获取某年某月有多少天
             int monthDay = DateTime.DaysInMonth(value.Year, value.Month);
 
             DateTime start = new DateTime(value.Year, value.Month, 1).Start();
             DateTime end = new DateTime(value.Year, value.Month, monthDay).End();
-            return (start, end);
+
+            return new Tuple<DateTime, DateTime>(start, end);
         }
 
         /// <summary>
@@ -370,9 +371,9 @@ namespace CodeArt.Util
             return DateTime.DaysInMonth(value.Year, value.Month);
         }
 
-        public static (DateTime Start, DateTime End) GetDayRange(this DateTime value)
+        public static Tuple<DateTime, DateTime> GetDayRange(this DateTime value)
         {
-            return (value.Start(), value.End());
+            return new Tuple<DateTime, DateTime>(value.Start(), value.End());
         }
 
 
@@ -398,7 +399,7 @@ namespace CodeArt.Util
             return value0.Year == value1.Year && value0.Month == value1.Month && value0.Day == value1.Day;
         }
 
-        private static Func<int, string> _getHumanizeHour = LazyIndexer.Init<int, string>((hour)=>
+        private static Func<int, string> _getHumanizeHour = LazyIndexer.Init<int, string>((hour) =>
         {
             if (hour >= 0 && hour <= 12)
             {
@@ -422,7 +423,7 @@ namespace CodeArt.Util
 
             var tip = _getHumanizeHour(value.Hour);
             if (value.Year == now.Year && value.Month == now.Month && value.Day == now.Day) return string.Format("今天 {0}{1:HH:mm}", tip, value);
-            if(value.Year == yesterday.Year && value.Month == yesterday.Month && value.Day == yesterday.Day) return string.Format("昨天 {0}{1:HH:mm}", tip, value);
+            if (value.Year == yesterday.Year && value.Month == yesterday.Month && value.Day == yesterday.Day) return string.Format("昨天 {0}{1:HH:mm}", tip, value);
             return string.Format("{1:MM月dd日} {0}{1:HH:mm}", tip, value);
         }
 
@@ -433,12 +434,12 @@ namespace CodeArt.Util
         /// <returns></returns>
         public static DateTime TimeZone(this DateTime value)
         {
-            if(value.Kind == DateTimeKind.Unspecified) //如果没有时区，就指定本地时区
+            if (value.Kind == DateTimeKind.Unspecified) //如果没有时区，就指定本地时区
                 return new DateTime(value.Year, value.Month, value.Day, value.Hour, value.Minute, value.Second, value.Millisecond, DateTimeKind.Local);
             return value;
         }
 
-        const long _minute = 60; 
+        const long _minute = 60;
         const long _hour = 60 * _minute;
         const long _day = 24 * _hour;
 
@@ -468,7 +469,7 @@ namespace CodeArt.Util
             return new DateTime(value.Year, value.Month, value.Day, value.Hour, minute, value.Second);
         }
 
-        public static DateTime SetMinute(this DateTime value, int minute,int second)
+        public static DateTime SetMinute(this DateTime value, int minute, int second)
         {
             return new DateTime(value.Year, value.Month, value.Day, value.Hour, minute, second);
         }
@@ -566,88 +567,90 @@ namespace CodeArt.Util
             return result;
         }
 
-        /// <summary>
-        /// 将集合<paramref name="source"/>转变成为<paramref name="target"/>，需要增加哪些元素和需要删除哪些元素
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="target"></param>
-        /// <returns></returns>
-        public static (IEnumerable<T> Adds, IEnumerable<T> Removes, IEnumerable<T> Updates) Transform<T>(this IEnumerable<T> source, IEnumerable<T> target)
-        {
-            return Transform<T>(source, target, (s, t) =>
-            {
-                return s.Equals(t);
-            });
-        }
+        ///// <summary>
+        ///// 将集合<paramref name="source"/>转变成为<paramref name="target"/>，需要增加哪些元素和需要删除哪些元素
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="source"></param>
+        ///// <param name="target"></param>
+        ///// <returns></returns>
+        //public static (IEnumerable<T> Adds, IEnumerable<T> Removes, IEnumerable<T> Updates) Transform<T>(this IEnumerable<T> source, IEnumerable<T> target)
+        //{
+        //    return Transform<T>(source, target, (s, t) =>
+        //    {
+        //        return s.Equals(t);
+        //    });
+        //}
 
-        public static (IEnumerable<T> Adds, IEnumerable<T> Removes, IEnumerable<T> Updates) Transform<T>(this IEnumerable<T> source, IEnumerable<T> target, Func<T, T, bool> equals)
-        {
-            return Transform<T, T>(source, target, equals);
-        }
+        //public static (IEnumerable<T> Adds, IEnumerable<T> Removes, IEnumerable<T> Updates) Transform<T>(this IEnumerable<T> source, IEnumerable<T> target, Func<T, T, bool> equals)
+        //{
+        //    return Transform<T, T>(source, target, equals);
+        //}
 
-        /// <summary>
-        /// 将集合<paramref name="source"/>转变成为<paramref name="target"/>，需要增加哪些元素和需要删除哪些元素
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="target"></param>
-        /// <param name="equals"></param>
-        /// <returns></returns>
-        public static (IEnumerable<TT> Adds, IEnumerable<ST> Removes, IEnumerable<TT> Updates) Transform<ST,TT>(this IEnumerable<ST> source, IEnumerable<TT> target, Func<ST, TT, bool> equals)
-        {
-            List<ST> souceCopy = new List<ST>(source);
-            List<TT> targetCopy = new List<TT>(target);
 
-            if (source.Count() == 0)
-                return (targetCopy, new ST[0], new TT[0]);
+        ///// <summary>
+        ///// 将集合<paramref name="source"/>转变成为<paramref name="target"/>，需要增加哪些元素和需要删除哪些元素
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="source"></param>
+        ///// <param name="target"></param>
+        ///// <param name="equals"></param>
+        ///// <returns></returns>
+        //public static (IEnumerable<TT> Adds, IEnumerable<ST> Removes, IEnumerable<TT> Updates) Transform<ST, TT>(this IEnumerable<ST> source, IEnumerable<TT> target, Func<ST, TT, bool> equals)
+        //{
+        //    List<ST> souceCopy = new List<ST>(source);
+        //    List<TT> targetCopy = new List<TT>(target);
 
-            if (target.Count() == 0)
-                return (new TT[0], souceCopy, new TT[0]);
+        //    if (source.Count() == 0)
+        //        return (targetCopy, new ST[0], new TT[0]);
 
-            List<TT> sames = new List<TT>(); //需要保留的
+        //    if (target.Count() == 0)
+        //        return (new TT[0], souceCopy, new TT[0]);
 
-            //bool isClass = typeof(TT).IsClass;
-            bool isClass = typeof(TT).IsClass || typeof(TT).IsInterface;
+        //    List<TT> sames = new List<TT>(); //需要保留的
 
-            //有相同的
-            foreach (var item in source)
-            {
-                var same = target.FirstOrDefault((t) => { return equals(item, t); });
+        //    //bool isClass = typeof(TT).IsClass;
+        //    bool isClass = typeof(TT).IsClass || typeof(TT).IsInterface;
 
-                //if (!same.Equals(default(TT)))
-                //{
-                //    sames.Add(same);
-                //}
+        //    //有相同的
+        //    foreach (var item in source)
+        //    {
+        //        var same = target.FirstOrDefault((t) => { return equals(item, t); });
 
-                if (isClass)
-                {
-                    if (same != null)  //找到相同的保留
-                    {
-                        sames.Add(same);
-                    }
-                }
-                else
-                {
-                    if (!same.Equals(default(TT)))
-                    {
-                        sames.Add(same);
-                    }
-                }
+        //        //if (!same.Equals(default(TT)))
+        //        //{
+        //        //    sames.Add(same);
+        //        //}
 
-            }
+        //        if (isClass)
+        //        {
+        //            if (same != null)  //找到相同的保留
+        //            {
+        //                sames.Add(same);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            if (!same.Equals(default(TT)))
+        //            {
+        //                sames.Add(same);
+        //            }
+        //        }
 
-            foreach (var same in sames)
-            {
-                souceCopy.Remove((item)=>
-                {
-                    return equals(item, same);
-                });
-                targetCopy.Remove(same);
-            }
+        //    }
 
-            return (targetCopy, souceCopy, sames);
-        }
+        //    foreach (var same in sames)
+        //    {
+        //        souceCopy.Remove((item) =>
+        //        {
+        //            return equals(item, same);
+        //        });
+        //        targetCopy.Remove(same);
+        //    }
+
+
+        //    return (targetCopy, souceCopy, sames);
+        //}
 
 
         /// <summary>
@@ -728,7 +731,7 @@ namespace CodeArt.Util
         /// <param name="source"></param>
         /// <param name="getKey"></param>
         /// <returns></returns>
-        public static IEnumerable<TSource> Distinct<TSource,TKey>(this IEnumerable<TSource> source,Func<TSource, TKey> getKey)
+        public static IEnumerable<TSource> Distinct<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> getKey)
         {
             var comparer = new KeyComparer<TSource, TKey>(getKey);
             return source.Distinct(comparer);
